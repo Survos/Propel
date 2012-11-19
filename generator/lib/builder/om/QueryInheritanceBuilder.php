@@ -321,13 +321,13 @@ class "  .$this->getClassname() . " extends " . $baseClassname . " {
     public function findOneOrCreate(\$con = null)
     {
         if (\$this->joins) {
-            throw new PropelException('findOneOrCreate() cannot be used on a query with a join, because Propel cannot transform a SQL JOIN into a subquery. You should split the query in two queries to avoid joins.');
+            throw new \\PropelException('findOneOrCreate() cannot be used on a query with a join, because Propel cannot transform a SQL JOIN into a subquery. You should split the query in two queries to avoid joins.');
         }
         if (!\$ret = \$this->findOne(\$con)) {
             \$class = ".$this->getPeerClassname() . "::CLASSNAME_" . strtoupper($child->getKey()) . ";
             \$obj = new \$class;
             foreach (\$this->keys() as \$key) {
-                \$obj->setByName(\$key, \$this->getValue(\$key), BasePeer::TYPE_COLNAME);
+                \$obj->setByName(\$key, \$this->getValue(\$key), \\BasePeer::TYPE_COLNAME);
             }
             \$ret = \$this->getFormatter()->formatRecord(\$obj);
         }
