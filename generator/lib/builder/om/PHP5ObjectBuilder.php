@@ -407,6 +407,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 
         $this->addAlreadyInSaveAttribute($script);
         $this->addAlreadyInValidationAttribute($script);
+        $this->addAlreadyInClearAllReferencesDeepAttribute($script);
 
         // apply behaviors
         $this->applyBehaviorModifier('objectAttributes', $script, "	");
@@ -931,12 +932,12 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             // while technically this is not a default value of null,
             // this seems to be closest in meaning.
             return null;
-        } else {
-            try {
-                \$dt = new $dateTimeClass(\$this->$clo);
-            } catch (Exception \$x) {
-                throw new PropelException(\"Internally stored date/time/timestamp value could not be converted to $dateTimeClass: \" . var_export(\$this->$clo, true), \$x);
-            }
+        }
+
+        try {
+            \$dt = new $dateTimeClass(\$this->$clo);
+        } catch (Exception \$x) {
+            throw new PropelException(\"Internally stored date/time/timestamp value could not be converted to $dateTimeClass: \" . var_export(\$this->$clo, true), \$x);
         }
 ";
         } else {
@@ -962,11 +963,14 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             return (int) \$dt->format('U');";
         }
         $script .= "
-        } elseif (strpos(\$format, '%') !== false) {
+        }
+
+        if (strpos(\$format, '%') !== false) {
             return strftime(\$format, \$dt->format('U'));
-        } else {
-            return \$dt->format(\$format);
-        }";
+        }
+
+        return \$dt->format(\$format);
+        ";
     }
 
     /**
@@ -1853,7 +1857,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
         // checking in mutators.
         if ($col->isPhpPrimitiveType()) {
             $script .= "
-        if (\$v !== null) {
+        if (\$v !== null && is_numeric(\$v)) {
             \$v = (".$col->getPhpType().") \$v;
         }
 ";
@@ -3261,13 +3265,14 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
      * Get the associated $className object
      *
      * @param PropelPDO \$con Optional Connection object.
+     * @param \$doQuery Executes a query to get the object if required
      * @return $className The associated $className object.
      * @throws PropelException
      */
-    public function get".$this->getFKPhpNameAffix($fk, $plural = false)."(PropelPDO \$con = null)
+    public function get".$this->getFKPhpNameAffix($fk, $plural = false)."(PropelPDO \$con = null, \$doQuery = true)
     {";
         $script .= "
-        if (\$this->$varName === null && ($conditional)) {";
+        if (\$this->$varName === null && ($conditional) && \$doQuery) {";
         if ($useRetrieveByPk) {
             $script .= "
             \$this->$varName = ".$fkQueryBuilder->getClassname()."::create()->findPk($localColumns, \$con);";
@@ -3689,22 +3694,22 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
         if (null === \$this->$collName || null !== \$criteria || \$partial) {
             if (\$this->isNew() && null === \$this->$collName) {
                 return 0;
-            } else {
-                if(\$partial && !\$criteria) {
-                    return count(\$this->get$relCol());
-                }
-                \$query = $fkQueryClassname::create(null, \$criteria);
-                if (\$distinct) {
-                    \$query->distinct();
-                }
-
-                return \$query
-                    ->filterBy" . $this->getFKPhpNameAffix($refFK) . "(\$this)
-                    ->count(\$con);
             }
-        } else {
-            return count(\$this->$collName);
+
+            if(\$partial && !\$criteria) {
+                return count(\$this->get$relCol());
+            }
+            \$query = $fkQueryClassname::create(null, \$criteria);
+            if (\$distinct) {
+                \$query->distinct();
+            }
+
+            return \$query
+                ->filterBy" . $this->getFKPhpNameAffix($refFK) . "(\$this)
+                ->count(\$con);
         }
+
+        return count(\$this->$collName);
     }
 ";
     } // addRefererCount
@@ -3766,6 +3771,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
                       \$this->{$collName}Partial = true;
                     }
 
+                    \$$collName"."->getInternalIterator()->rewind();
                     return \$$collName;
                 }
 
@@ -3816,9 +3822,11 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
      */
     public function set{$relatedName}(PropelCollection \${$inputCollection}, PropelPDO \$con = null)
     {
-        \$this->{$inputCollection}ScheduledForDeletion = \$this->get{$relatedName}(new Criteria(), \$con)->diff(\${$inputCollection});
+        \${$inputCollection}ToDelete = \$this->get{$relatedName}(new Criteria(), \$con)->diff(\${$inputCollection});
 
-        foreach (\$this->{$inputCollection}ScheduledForDeletion as \${$inputCollectionEntry}Removed) {
+        \$this->{$inputCollection}ScheduledForDeletion = unserialize(serialize(\${$inputCollection}ToDelete));
+
+        foreach (\${$inputCollection}ToDelete as \${$inputCollectionEntry}Removed) {
             \${$inputCollectionEntry}Removed->set{$relCol}(null);
         }
 
@@ -3883,6 +3891,8 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
         $collName = $this->getRefFKCollVarName($refFK);
         $relCol   = $this->getFKPhpNameAffix($refFK, $plural = false);
 
+        $localColumn = $refFK->getLocalColumn();
+
         $script .= "
     /**
      * @param	{$relatedObjectClassName} \${$lowerRelatedObjectClassName} The $lowerRelatedObjectClassName object to remove.
@@ -3895,8 +3905,17 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             if (null === \$this->{$inputCollection}) {
                 \$this->{$inputCollection} = clone \$this->{$collName};
                 \$this->{$inputCollection}->clear();
+            }";
+
+            if (!$refFK->isComposite() && !$localColumn->isNotNull()) {
+            $script .= "
+            \$this->{$inputCollection}[]= \${$lowerRelatedObjectClassName};";
+            } else {
+            $script .= "
+            \$this->{$inputCollection}[]= clone \${$lowerRelatedObjectClassName};";
             }
-            \$this->{$inputCollection}[]= \${$lowerRelatedObjectClassName};
+
+            $script .= "
             \${$lowerRelatedObjectClassName}->set{$relCol}(null);
         }
 
@@ -3971,7 +3990,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
         \$this->$varName = \$v;
 
         // Make sure that that the passed-in $className isn't already associated with this object
-        if (\$v !== null && \$v->get".$this->getFKPhpNameAffix($refFK, $plural = false)."() === null) {
+        if (\$v !== null && \$v->get".$this->getFKPhpNameAffix($refFK, $plural = false)."(null, false) === null) {
             \$v->set".$this->getFKPhpNameAffix($refFK, $plural = false)."(\$this);
         }
 
@@ -4043,6 +4062,12 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
                 }
 
                 foreach (\$this->get{$relatedName}() as \${$lowerSingleRelatedName}) {
+                    if (\${$lowerSingleRelatedName}->isModified()) {
+                        \${$lowerSingleRelatedName}->save(\$con);
+                    }
+                }
+            } elseif (\$this->coll{$relatedName}) {
+                foreach (\$this->coll{$relatedName} as \${$lowerSingleRelatedName}) {
                     if (\${$lowerSingleRelatedName}->isModified()) {
                         \${$lowerSingleRelatedName}->save(\$con);
                     }
@@ -4550,7 +4575,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
                 $varName = $this->getPKRefFKVarName($refFK);
                 $script .= "
             if (\$this->$varName !== null) {
-                if (!\$this->{$varName}->isDeleted()) {
+                if (!\$this->{$varName}->isDeleted() && (\$this->{$varName}->isNew() || \$this->{$varName}->isModified())) {
                         \$affectedRows += \$this->{$varName}->save(\$con);
                 }
             }
@@ -4560,7 +4585,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
                 $script .= "
             if (\$this->$collName !== null) {
                 foreach (\$this->$collName as \$referrerFK) {
-                    if (!\$referrerFK->isDeleted()) {
+                    if (!\$referrerFK->isDeleted() && (\$referrerFK->isNew() || \$referrerFK->isModified())) {
                         \$affectedRows += \$referrerFK->save(\$con);
                     }
                 }
@@ -4755,7 +4780,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
          // check the columns in natural order for more readable SQL queries";
         foreach ($table->getColumns() as $column) {
             $constantName = $this->getColumnConstant($column);
-            $identifier = var_export($platform->quoteIdentifier(strtoupper($column->getName())), true);
+            $identifier = var_export($platform->quoteIdentifier($column->getName()), true);
             $script .= "
         if (\$this->isColumnModified($constantName)) {
             \$modifiedColumns[':p' . \$index++]  = $identifier;
@@ -4775,7 +4800,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             foreach (\$modifiedColumns as \$identifier => \$columnName) {
                 switch (\$columnName) {";
         foreach ($table->getColumns() as $column) {
-            $columnNameCase = var_export($platform->quoteIdentifier(strtoupper($column->getName())), true);
+            $columnNameCase = var_export($platform->quoteIdentifier($column->getName()), true);
             $script .= "
                     case $columnNameCase:";
             $script .= $platform->getColumnBindingPHP($column, "\$identifier", '$this->' . strtolower($column->getName()), '						');
@@ -5074,6 +5099,21 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
     }
 
     /**
+     * Adds the $alreadyInValidation attribute, which prevents attempting to re-validate the same object.
+     * @param string &$script The script will be modified in this method.
+     */
+    protected function addAlreadyInClearAllReferencesDeepAttribute(&$script)
+    {
+        $script .= "
+    /**
+     * Flag to prevent endless clearAllReferences(\$deep=true) loop, if this object is referenced
+     * @var        boolean
+     */
+    protected \$alreadyInClearAllReferencesDeep = false;
+";
+    }
+
+    /**
      * Adds the validate() method.
      * @param string &$script The script will be modified in this method.
      */
@@ -5098,11 +5138,11 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             \$this->validationFailures = array();
 
             return true;
-        } else {
-            \$this->validationFailures = \$res;
-
-            return false;
         }
+
+        \$this->validationFailures = \$res;
+
+        return false;
     }
 ";
     } // addValidate()
@@ -5432,6 +5472,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
         $script .= "
         \$this->alreadyInSave = false;
         \$this->alreadyInValidation = false;
+        \$this->alreadyInClearAllReferencesDeep = false;
         \$this->clearAllReferences();";
 
         if ($this->hasDefaultValues()) {
@@ -5468,7 +5509,8 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
      */
     public function clearAllReferences(\$deep = false)
     {
-        if (\$deep) {";
+        if (\$deep && !\$this->alreadyInClearAllReferencesDeep) {
+            \$this->alreadyInClearAllReferencesDeep = true;";
         $vars = array();
         foreach ($this->getTable()->getReferrers() as $refFK) {
             if ($refFK->isLocalPrimaryKey()) {
@@ -5500,7 +5542,16 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
             $vars[] = $varName;
         }
 
+        foreach ($table->getForeignKeys() as $fk) {
+            $varName = $this->getFKVarName($fk);
+            $script .= "
+            if (\$this->$varName instanceof Persistent) {
+              \$this->{$varName}->clearAllReferences(\$deep);
+            }";
+        }
         $script .= "
+
+            \$this->alreadyInClearAllReferencesDeep = false;
         } // if (\$deep)
 ";
 

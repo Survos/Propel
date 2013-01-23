@@ -36,9 +36,9 @@ class SortableBehaviorPeerBuilderModifier
         return strtolower($this->behavior->getColumnForParameter($name)->getName());
     }
 
-        protected function getColumnConstant($name)
+    protected function getColumnConstant($name)
     {
-        return strtoupper($this->behavior->getColumnForParameter($name)->getName());
+        return $this->behavior->getColumnForParameter($name)->getName();
     }
 
     protected function getColumnPhpName($name)
@@ -50,8 +50,11 @@ class SortableBehaviorPeerBuilderModifier
     {
         $this->builder = $builder;
         $this->objectClassname = $builder->getStubObjectBuilder()->getClassname();
-        $this->peerClassname = $builder->getStubPeerBuilder()->getClassname();
-        $this->queryClassname = $builder->getStubQueryBuilder()->getClassname();
+        $this->peerClassname   = $builder->getStubPeerBuilder()->getClassname();
+        $this->queryClassname  = $builder->getStubQueryBuilder()->getClassname();
+
+        $builder->declareClassFromBuilder($builder->getStubObjectBuilder());
+        $builder->declareClassFromBuilder($builder->getStubQueryBuilder());
     }
 
     public function staticAttributes($builder)

@@ -170,6 +170,14 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
         $this->assertEquals(1, count($books), 'getCrossRefFK() accepts a query as first parameter');
     }
 
+    public function testOneToManyGetter()
+    {
+        BookstoreDataPopulator::populate(null, true);
+        $author = AuthorQuery::create()->findOneByLastName('Grass');
+        $books = $author->getBooks(new Criteria());
+        $this->assertNotNull($books->getCurrent(), 'getRelCol() initialize the internal iterator at the beginning');
+    }
+
     public function testManyToManyCounterExists()
     {
         $this->assertTrue(method_exists('BookClubList', 'countBooks'), 'Object generator correcly adds counter for the crossRefFk');
@@ -888,4 +896,48 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
         $this->assertCount(1, $bookClubList->getFavoriteBookRelateds(), 'there should be one book in the bookClubList');
     }
 
+    public function testRefIsOnlySavedWhenRequired()
+    {
+        BookQuery::create()->deleteAll();
+
+        $book = new Book();
+        $book->setTitle('Propel Book');
+        $book->setISBN('TEST');
+        $book->save();
+        $bookId = $book->getId();
+
+        BookPeer::clearInstancePool();
+
+        $summary = $this->getMock('BookSummary');
+        $summary
+            ->expects($this->once())
+            ->method('isDeleted')
+            ->will($this->returnValue(false))
+        ;
+        $summary
+            ->expects($this->once())
+            ->method('isNew')
+            ->will($this->returnValue(false))
+        ;
+        $summary
+            ->expects($this->once())
+            ->method('isModified')
+            ->will($this->returnValue(false))
+        ;
+        $summary
+            ->expects($this->never())
+            ->method('save')
+        ;
+
+        $coll = new PropelObjectCollection();
+        $coll->append($summary);
+
+        $book = BookQuery::create()->findOneById($bookId);
+
+        // In conjunction with the mock above, this simulates loading those entries prior saving the book.
+        $book->setBookSummarys($coll);
+
+        $book->setTitle('Propel2 Book');
+        $book->save();
+    }
 }
