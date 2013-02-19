@@ -270,6 +270,7 @@ class ModelCriteria extends Criteria
      * @param mixed $clause A string representing the pseudo SQL clause, e.g. 'Book.AuthorId = ?'
      *                           Or an array of condition names
      * @param mixed $value A value for the condition
+     * @param string $bindingType
      *
      * @return ModelCriteria The current object, for fluid interface
      */
@@ -304,6 +305,7 @@ class ModelCriteria extends Criteria
      *
      * @param string $clause The pseudo SQL clause, e.g. 'AuthorId = ?'
      * @param mixed  $value  A value for the condition
+     * @param string $bindingType
      *
      * @return ModelCriteria The current object, for fluid interface
      */
@@ -331,6 +333,7 @@ class ModelCriteria extends Criteria
      * @param mixed $clause A string representing the pseudo SQL clause, e.g. 'Book.AuthorId = ?'
      *                           Or an array of condition names
      * @param mixed $value A value for the condition
+     * @param string $bindingType
      *
      * @return ModelCriteria The current object, for fluid interface
      */
@@ -559,7 +562,8 @@ class ModelCriteria extends Criteria
         }
 
         // Add requested columns which are not withColumns
-        $columnNames = is_array($this->select) ? $this->select : array($this->select);
+        $columnNames = (array) $this->select;
+        
         // temporary store columns Alias or withColumn
         $asColumns = $this->getAsColumns();
         $this->asColumns = array();
@@ -571,7 +575,14 @@ class ModelCriteria extends Criteria
                 $this->addAsColumn('"' . $columnName . '"', $column[1]);
             } else {
                 $this->addAsColumn($columnName, $asColumns[$columnName]);
+                // remove already added columns
+                unset($asColumns[$columnName]);
             }
+        }
+        
+        // re-add all remaining columns which were not contained in select-columnNames
+        foreach($asColumns as $columnName => $columnAlias) {
+            $this->addAsColumn($columnName, $columnAlias);
         }
     }
 
@@ -694,6 +705,7 @@ class ModelCriteria extends Criteria
      * @param string $clause   SQL clause, may contain column and table phpNames
      * @param mixed  $value    An optional value to bind to the clause
      * @param string $operator The operator to use to add the condition. Defaults to 'AND'
+     * @param string $bindingType
      *
      * @return ModelCriteria The current object, for fluid interface
      *
@@ -753,6 +765,7 @@ class ModelCriteria extends Criteria
      * Add a join object to the Criteria
      * @see   Criteria::addJoinObject()
      * @param Join $join A join object
+     * @param string $name
      *
      * @return ModelCriteria The current object, for fluid interface
      */
@@ -905,7 +918,7 @@ class ModelCriteria extends Criteria
      *
      * @see       ModelCriteria::endUse()
      * @param string $relationName        Relation name or alias
-     * @param string $secondCriteriaClass Classname for the ModelCriteria to be used
+     * @param string $secondaryCriteriaClass Classname for the ModelCriteria to be used
      *
      * @return ModelCriteria The secondary criteria object
      *
@@ -1789,6 +1802,7 @@ class ModelCriteria extends Criteria
      *
      * @param string $clause The pseudo SQL clause, e.g. 'AuthorId = ?'
      * @param mixed  $value  A value for the condition
+     * @param string $bindingType
      *
      * @return Criterion a Criterion or ModelCriterion object
      *
@@ -1960,6 +1974,7 @@ class ModelCriteria extends Criteria
      * </code>
      *
      * @param string $phpName String representing the column name in a pseudo SQL clause, e.g. 'Book.Title'
+     * @param boolean $failSilently
      *
      * @return array List($columnMap, $realColumnName)
      *
@@ -2020,6 +2035,10 @@ class ModelCriteria extends Criteria
 
     /**
      * Special case for subquery columns
+     *
+     * @param string $class
+     * @param string $phpName
+     * @param boolean $failSilently
      *
      * @return array List($columnMap, $realColumnName)
      *
@@ -2096,9 +2115,9 @@ class ModelCriteria extends Criteria
      *
      * @return ModelCriteria A modified Criteria object.
      */
-    public function addUsingAlias($p1, $value = null, $operator = null)
+    public function addUsingAlias($column, $value = null, $operator = null)
     {
-        return $this->addUsingOperator($this->getAliasedColName($p1), $value, $operator);
+        return $this->addUsingOperator($this->getAliasedColName($column), $value, $operator);
     }
 
     /**

@@ -577,6 +577,21 @@ class PropelCollection extends ArrayObject implements Serializable
     }
 
     /**
+     * Creates clones of the containing data.
+     */
+    public function __clone()
+    {
+        foreach ($this as $key => $val) {
+            // we need to clone only objects, all scalar values will be copied using "="
+            if (is_object($val)) {
+                $this[$key] = clone $val;
+            } else {
+                $this[$key] = $val;
+            }
+        }
+    }
+
+    /**
      * Get an array representation of the collection
      * Each object is turned into an array and the result is returned
      *
