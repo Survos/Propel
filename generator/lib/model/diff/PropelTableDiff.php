@@ -438,7 +438,7 @@ class PropelTableDiff
      *
      * @param  $modifiedIndices
      */
-    public function setModifiedIndices( $modifiedIndices)
+    public function setModifiedIndices($modifiedIndices)
     {
         $this->modifiedIndices = $modifiedIndices;
     }
@@ -534,7 +534,7 @@ class PropelTableDiff
      */
     public function removeRemovedFk($fkName)
     {
-        unset($this->removedFks[$columnName]);
+        unset($this->removedFks[$fkName]);
     }
 
     /**
@@ -597,7 +597,7 @@ class PropelTableDiff
         $diff->setRemovedColumns($this->getAddedColumns());
         $renamedColumns = array();
         foreach ($this->getRenamedColumns() as $columnRenaming) {
-            $renamedColumns[]= array_reverse($columnRenaming);
+            $renamedColumns[] = array_reverse($columnRenaming);
         }
         $diff->setRenamedColumns($renamedColumns);
         $columnDiffs = array();
@@ -611,7 +611,7 @@ class PropelTableDiff
         $diff->setRemovedPkColumns($this->getAddedPkColumns());
         $renamedPkColumns = array();
         foreach ($this->getRenamedPkColumns() as $columnRenaming) {
-            $renamedPkColumns[]= array_reverse($columnRenaming);
+            $renamedPkColumns[] = array_reverse($columnRenaming);
         }
         $diff->setRenamedPkColumns($renamedPkColumns);
 
@@ -721,5 +721,4 @@ class PropelTableDiff
 
         return $ret;
     }
-
 }

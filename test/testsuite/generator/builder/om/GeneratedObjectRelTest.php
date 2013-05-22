@@ -103,7 +103,7 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
 
     /**
      * Tests reverse setting of relationships, saving one of the objects first.
-     * @link       http://propel.phpdb.org/trac/ticket/508
+     * @link       http://trac.propelorm.org/ticket/508
      */
     public function testManyToMany_Dir2_Saved()
     {
@@ -178,6 +178,33 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
         $this->assertNotNull($books->getCurrent(), 'getRelCol() initialize the internal iterator at the beginning');
     }
 
+   /**
+    * @group issue677
+    */
+    public function testManyToManySetterIsNotLoosingAnyReference()
+    {
+        $list1 = new BookClubList();
+        $list2 = new BookClubList();
+        $book = new Book();
+
+        $book->addBookClubList($list1);
+        $book->addBookClubList($list2);
+
+        $lists = $book->getBookClubLists();
+        $this->assertCount(2, $lists, 'setRelCol is losing references to referenced object');
+
+        $rels = $book->getBookListRels();
+        $this->assertCount(2, $rels, 'setRelCol is losing references to relation object');
+
+        foreach ($rels as $rel) {
+            $this->assertNotNull($rel->getBook(), 'setRelCol is losing backreference on set relation to local object');
+            $this->assertNotNull($rel->getBookClubList(), 'setRelCol is losing backreference on set relation to referenced object');
+        }
+
+        foreach ($lists as $list) {
+            $this->assertCount(1, $list->getBooks(), 'setRelCol is losing backreference on set objects');
+        }
+    }
     public function testManyToManyCounterExists()
     {
         $this->assertTrue(method_exists('BookClubList', 'countBooks'), 'Object generator correcly adds counter for the crossRefFk');
@@ -237,7 +264,7 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
 
     /**
      * Test behavior of columns that are implicated in multiple foreign keys.
-     * @link       http://propel.phpdb.org/trac/ticket/228
+     * @link       http://trac.propelorm.org/ticket/228
      */
     public function testMultiFkImplication()
     {
@@ -314,7 +341,7 @@ class GeneratedObjectRelTest extends BookstoreEmptyTestBase
 
     /**
      * This tests to see whether modified objects are being silently overwritten by calls to fk accessor methods.
-     * @link       http://propel.phpdb.org/trac/ticket/509#comment:5
+     * @link       http://trac.propelorm.org/ticket/509#comment:5
      */
     public function testModifiedObjectOverwrite()
     {

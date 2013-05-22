@@ -63,7 +63,9 @@ public function forceDelete(PropelPDO \$con = null)
 {
     if (\$isSoftDeleteEnabled = {$peerClassName}::isSoftDeleteEnabled()) { {$peerClassName}::disableSoftDelete();
     }
+
     \$this->delete(\$con);
+
     if (\$isSoftDeleteEnabled) { {$peerClassName}::enableSoftDelete();
     }
 }
@@ -375,7 +377,7 @@ public static function doSoftDelete(\$values, PropelPDO \$con = null)
         // it must be the primary key
         \$selectCriteria = new Criteria(self::DATABASE_NAME);";
         $pks = $this->getTable()->getPrimaryKey();
-        if (count($pks)>1) {
+        if (count($pks) > 1) {
             $i = 0;
             foreach ($pks as $col) {
                 $script .= "

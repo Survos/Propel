@@ -33,15 +33,19 @@ class GeneratorConfig implements GeneratorConfigInterface
 
     /**
      * Construct a new GeneratorConfig.
+     *
      * @param mixed $props Array or Iterator
      */
     public function __construct($props = null)
     {
-        if ($props) $this->setBuildProperties($props);
+        if ($props) {
+            $this->setBuildProperties($props);
+        }
     }
 
     /**
      * Gets the build properties.
+     *
      * @return array
      */
     public function getBuildProperties()
@@ -67,7 +71,7 @@ class GeneratorConfig implements GeneratorConfigInterface
                 $newKey = substr($key, strlen("propel."));
                 $j = strpos($newKey, '.');
                 while ($j !== false) {
-                    $newKey =  substr($newKey, 0, $j) . ucfirst(substr($newKey, $j + 1));
+                    $newKey = substr($newKey, 0, $j) . ucfirst(substr($newKey, $j + 1));
                     $j = strpos($newKey, '.');
                 }
                 $this->setBuildProperty($newKey, $propValue);
@@ -78,7 +82,8 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Gets a specific propel (renamed) property from the build.
      *
-     * @param  string $name
+     * @param string $name
+     *
      * @return mixed
      */
     public function getBuildProperty($name)
@@ -100,7 +105,8 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Resolves and returns the class name based on the specified property value.
      *
-     * @param  string         $propname The name of the property that holds the class path (dot-path notation).
+     * @param string $propname The name of the property that holds the class path (dot-path notation).
+     *
      * @return string         The class name.
      * @throws BuildException If the classname cannot be determined or class cannot be loaded.
      */
@@ -115,7 +121,7 @@ class GeneratorConfig implements GeneratorConfigInterface
         // Basically, we want to turn ?.?.?.sqliteDataSQLBuilder into ?.?.?.SqliteDataSQLBuilder
         $lastdotpos = strrpos($classpath, '.');
         if ($lastdotpos !== false) {
-            $classpath{$lastdotpos+1} = strtoupper($classpath{$lastdotpos+1});
+            $classpath{$lastdotpos + 1} = strtoupper($classpath{$lastdotpos + 1});
         } else {
             // Allows to configure full classname instead of a dot-path notation
             if (class_exists($classpath)) {
@@ -136,7 +142,8 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Resolves and returns the builder class name.
      *
-     * @param  string $type
+     * @param string $type
+     *
      * @return string The class name.
      */
     public function getBuilderClassname($type)
@@ -149,7 +156,8 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Creates and configures a new Platform class.
      *
-     * @param  PDO            $con
+     * @param PDO $con
+     *
      * @return Platform
      * @throws BuildException
      */
@@ -183,7 +191,9 @@ class GeneratorConfig implements GeneratorConfigInterface
 
     /**
      * Creates and configures a new SchemaParser class for specified platform.
-     * @param  PDO            $con
+     *
+     * @param PDO $con
+     *
      * @return SchemaParser
      * @throws BuildException
      */
@@ -204,8 +214,9 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Gets a configured data model builder class for specified table and based on type.
      *
-     * @param  Table            $table
-     * @param  string           $type  The type of builder ('ddl', 'sql', etc.)
+     * @param Table  $table
+     * @param string $type  The type of builder ('ddl', 'sql', etc.)
+     *
      * @return DataModelBuilder
      */
     public function getConfiguredBuilder(Table $table, $type, $cache = true)
@@ -233,7 +244,8 @@ class GeneratorConfig implements GeneratorConfigInterface
     /**
      * Gets a configured behavior class
      *
-     * @param  string $name a behavior name
+     * @param string $name a behavior name
+     *
      * @return string a behavior class name
      */
     public function getConfiguredBehavior($name)
@@ -257,7 +269,7 @@ class GeneratorConfig implements GeneratorConfigInterface
     public function getBuildConnections()
     {
         if (null === $this->buildConnections) {
-            $buildTimeConfigPath = $this->getBuildProperty('buildtimeConfFile') ? $this->getBuildProperty('projectDir') . DIRECTORY_SEPARATOR .  $this->getBuildProperty('buildtimeConfFile') : null;
+            $buildTimeConfigPath = $this->getBuildProperty('buildtimeConfFile') ? $this->getBuildProperty('projectDir') . DIRECTORY_SEPARATOR . $this->getBuildProperty('buildtimeConfFile') : null;
             if ($buildTimeConfigString = $this->getBuildProperty('buildtimeConf')) {
                 // configuration passed as propel.buildtimeConf string
                 // probably using the command line, which doesn't accept whitespace

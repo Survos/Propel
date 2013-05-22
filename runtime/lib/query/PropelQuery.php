@@ -18,7 +18,8 @@
 class PropelQuery
 {
     /**
-     * @param  string          $queryClassAndAlias
+     * @param string $queryClassAndAlias
+     *
      * @return ModelCriteria
      * @throws PropelException
      */

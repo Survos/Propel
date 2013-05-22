@@ -28,18 +28,21 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
 
     /**
      * Properties file that maps an SQL file to a particular database.
+     *
      * @var        PhingFile
      */
     private $sqldbmap;
 
     /**
      * Properties file that maps a data XML file to a particular database.
+     *
      * @var        PhingFile
      */
     private $datadbmap;
 
     /**
      * The base directory in which to find data XML files.
+     *
      * @var        PhingFile
      */
     private $srcDir;
@@ -47,7 +50,8 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
     /**
      * Set the file that maps between SQL files and databases.
      *
-     * @param  PhingFile $sqldbmap the sql -> db map.
+     * @param PhingFile $sqldbmap the sql -> db map.
+     *
      * @return void
      */
     public function setSqlDbMap(PhingFile $sqldbmap)
@@ -68,7 +72,8 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
     /**
      * Set the file that maps between data XML files and databases.
      *
-     * @param  PhingFile $datadbmap the db map
+     * @param PhingFile $datadbmap the db map
+     *
      * @return void
      */
     public function setDataDbMap(PhingFile $datadbmap)
@@ -88,6 +93,7 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
 
     /**
      * Set the src directory for the data xml files listed in the datadbmap file.
+     *
      * @param PhingFile $srcDir data xml source directory
      */
     public function setSrcDir(PhingFile $srcDir)
@@ -107,6 +113,7 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
 
     /**
      * Search through all data models looking for matching database.
+     *
      * @return Database or NULL if none found.
      */
     private function getDatabase($name)
@@ -170,7 +177,7 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
                     $dataXmlParser = new XmlToDataSQL($db, $this->getGeneratorConfig(), $this->dbEncoding);
                     $dataXmlParser->transform($dataXMLFile, $sqlWriter);
                 } catch (Exception $e) {
-                    throw new BuildException("Exception parsing data XML: " . $e->getMessage(), $x);
+                    throw new BuildException("Exception parsing data XML: " . $e->getMessage());
                 }
 
                 // Place the generated SQL file(s)
@@ -181,12 +188,9 @@ class PropelDataSQLTask extends AbstractPropelDataModelTask
 
                 $p->setProperty($outFile->getName(), $db->getName());
                 $p->store($this->getSqlDbMap(), "Sqlfile -> Database map");
-
             } else {
-                $this->log("File '" . $dataXMLFile->getAbsolutePath()
-                        . "' in datadbmap does not exist, so skipping it.", Project::MSG_WARN);
+                $this->log("File '" . $dataXMLFile->getAbsolutePath() . "' in datadbmap does not exist, so skipping it.", Project::MSG_WARN);
             }
-
         } // foreach data xml file
 
     } // main()

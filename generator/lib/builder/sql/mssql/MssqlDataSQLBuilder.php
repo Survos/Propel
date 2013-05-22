@@ -21,7 +21,8 @@ class MssqlDataSQLBuilder extends DataSQLBuilder
 
     /**
      *
-     * @param  mixed  $blob Blob object or string containing data.
+     * @param mixed $blob Blob object or string containing data.
+     *
      * @return string
      */
     protected function getBlobSql($blob)
@@ -32,7 +33,6 @@ class MssqlDataSQLBuilder extends DataSQLBuilder
         }
         $data = unpack("H*hex", $blob);
 
-        return '0x'.$data['hex']; // no surrounding quotes!
+        return '0x' . $data['hex']; // no surrounding quotes!
     }
-
 }

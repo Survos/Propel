@@ -43,7 +43,8 @@ class PropelConfiguration implements ArrayAccess
     /**
      * @see       http://www.php.net/ArrayAccess
      *
-     * @param  integer $offset
+     * @param integer $offset
+     *
      * @return boolean
      */
     public function offsetExists($offset)
@@ -66,7 +67,8 @@ class PropelConfiguration implements ArrayAccess
     /**
      * @see       http://www.php.net/ArrayAccess
      *
-     * @param  integer $offset
+     * @param integer $offset
+     *
      * @return array
      */
     public function offsetGet($offset)
@@ -96,7 +98,7 @@ class PropelConfiguration implements ArrayAccess
      *   echo $c->getParameter('foo1'); => null
      *   echo $c->getParameter('foo1.foo2'); => 'bar'
      * </code>
-   *
+     *
      * @param string $name    Parameter name
      * @param mixed  $default Default value to be used if the requested value is not found
      *
@@ -145,7 +147,8 @@ class PropelConfiguration implements ArrayAccess
     /**
      * @throws PropelException
      *
-     * @param  integer $type
+     * @param integer $type
+     *
      * @return mixed
      */
     public function getParameters($type = PropelConfiguration::TYPE_ARRAY)
@@ -158,7 +161,7 @@ class PropelConfiguration implements ArrayAccess
             case PropelConfiguration::TYPE_OBJECT:
                 return $this;
             default:
-                throw new PropelException('Unknown configuration type: '. var_export($type, true));
+                throw new PropelException('Unknown configuration type: ' . var_export($type, true));
         }
     }
 
@@ -180,7 +183,7 @@ class PropelConfiguration implements ArrayAccess
         $result = array();
         $it = new PropelConfigurationIterator(new RecursiveArrayIterator($this->parameters), RecursiveIteratorIterator::SELF_FIRST);
         foreach ($it as $key => $value) {
-            $ns = $it->getDepth() ? $it->getNamespace() . '.'. $key : $key;
+            $ns = $it->getDepth() ? $it->getNamespace() . '.' . $key : $key;
             if ($it->getNodeType() == PropelConfigurationIterator::NODE_ITEM) {
                 $result[$ns] = $value;
             }

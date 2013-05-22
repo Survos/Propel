@@ -41,13 +41,14 @@ class NotMatchValidator implements BasicValidator
      * Prepares the regular expression entered in the XML
      * for use with preg_match().
      *
-     * @param  string $exp
+     * @param string $exp
+     *
      * @return string
      */
     private function prepareRegexp($exp)
     {
         // remove surrounding '/' marks so that they don't get escaped in next step
-        if ($exp{0} !== '/' || $exp{strlen($exp)-1} !== '/' ) {
+        if ($exp{0} !== '/' || $exp{strlen($exp) - 1} !== '/') {
             $exp = '/' . $exp . '/';
         }
 
