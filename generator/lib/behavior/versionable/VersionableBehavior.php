@@ -158,6 +158,7 @@ class VersionableBehavior extends Behavior
 
     public function addForeignKeyVersionColumns()
     {
+        $table = $this->getTable();
         $versionTable = $this->versionTable;
         foreach ($this->getVersionableFks() as $fk) {
             $fkVersionColumnName = $fk->getLocalColumnName() . '_version';
@@ -170,14 +171,15 @@ class VersionableBehavior extends Behavior
             }
         }
         foreach ($this->getVersionableReferrers() as $fk) {
-            $fkIdsColumnName = $this->getReferrerIdsColumnName($fk);
+            $fkTableName = $fk->getTable()->getName();
+            $fkIdsColumnName = $fkTableName . '_ids';
             if (!$versionTable->containsColumn($fkIdsColumnName)) {
                 $versionTable->addColumn(array(
                     'name'    => $fkIdsColumnName,
                     'type'    => 'ARRAY'
                 ));
             }
-            $fkVersionsColumnName = $this->getReferrerVersionsColumnName($fk);
+            $fkVersionsColumnName = $fkTableName . '_versions';
             if (!$versionTable->containsColumn($fkVersionsColumnName)) {
                 $versionTable->addColumn(array(
                     'name'    => $fkVersionsColumnName,
@@ -225,32 +227,19 @@ class VersionableBehavior extends Behavior
         return $versionableReferrers;
     }
 
-    public function getReferrerColumnPrefix(ForeignKey $fk)
-    {
-        // Strip off Postgres schema from table name if it exists
-        $fkTableName = preg_replace('/^\w+\./', '', $fk->getTable()->getName());
-        return $fkTableName . '_';
-    }
-
-    public function getReferrerIdsColumnName(ForeignKey $fk)
-    {
-        return $this->getReferrerColumnPrefix($fk) . 'ids';
-    }
-
     public function getReferrerIdsColumn(ForeignKey $fk)
     {
-        $fkIdsColumnName = $this->getReferrerIdsColumnName($fk);
-        return $this->versionTable->getColumn($fkIdsColumnName);
-    }
+        $fkTableName = $fk->getTable()->getName();
+        $fkIdsColumnName = $fkTableName . '_ids';
 
-    public function getReferrerVersionsColumnName(ForeignKey $fk)
-    {
-        return $this->getReferrerColumnPrefix($fk) . 'versions';
+        return $this->versionTable->getColumn($fkIdsColumnName);
     }
 
     public function getReferrerVersionsColumn(ForeignKey $fk)
     {
-        $fkIdsColumnName = $this->getReferrerVersionsColumnName($fk);
+        $fkTableName = $fk->getTable()->getName();
+        $fkIdsColumnName = $fkTableName . '_versions';
+
         return $this->versionTable->getColumn($fkIdsColumnName);
     }
 
